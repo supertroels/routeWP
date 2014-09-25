@@ -37,6 +37,9 @@ class routeWP {
 
 	function get_route(){
 
+		if(is_admin())
+			return false;
+
 		if($this->route)
 			return $this->route;
 
