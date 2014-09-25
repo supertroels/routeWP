@@ -59,18 +59,17 @@ class routeWP {
 			if(preg_match($pattern, $req, $matches)){
 
 				if(is_array($route['query_vars'])){
-
 					foreach($route['query_vars'] as $key => $value){
-
-						if(preg_match('~^\$([\d]{1,3})$~', $value, $num)){
-							if($matches[$num[1]])
-								$route['query_vars'][$key] = $matches[$num[1]];
-							else
-								unset($route['query_vars'][$key]);
+						if(preg_match_all('~\$([\d]{1,3})~', $value, $ph)){
+							if($placeholders = $ph[1]){
+								foreach($placeholders as $num){
+									if($matches[$num]){
+										$route['query_vars'][$key] = str_ireplace('$'.$num, $matches[$num], $route['query_vars'][$key]);
+									}
+								}
+							}
 						}
-
 					}
-
 				}
 
 				if(is_array($route['supports'])){
