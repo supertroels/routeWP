@@ -9,12 +9,17 @@ class routeWP {
 
 	function __construct(){
 
+		$this->dir 				= dirname(__FILE__);
+		$this->status_templates = array();
+
 		if(!is_admin()){
 			add_filter('request', array($this, 'filter_request'), 999, 1);
 			add_filter('query_vars', array($this, 'setup_query_vars'), 999, 1);
 			add_filter('parse_query', array($this, 'parse_query'), 999, 1);
 			add_filter('template_include', array($this, 'handle_request_template'), 999, 1);
 		}
+
+		$this->set_status_template(404, $this->dir.'/templates/404.php');
 
 	}
 
@@ -24,9 +29,9 @@ class routeWP {
 			return null;
 
 		$defaults = array(
-			'template'	 	=> false,
+			'template'	 	=> $this->dir.'/templates/index.php',
 			'query_vars' 	=> array(),
-			'support' 		=> array()
+			'type' 			=> ''
 			);
 
 		$args = array_merge($defaults, $args);
@@ -35,9 +40,10 @@ class routeWP {
 			return false;
 
 		$this->routes[$args['pattern']] = array(
-			'query_vars' => $args['query_vars'], 
-			'template' => $args['template'],
-			'support' => $args['supports']
+			'handle' 		=> $args['handle'],
+			'query_vars' 	=> $args['query_vars'], 
+			'template' 		=> $args['template'],
+			'type' 			=> $args['type']
 			);
 
 	}
@@ -72,14 +78,40 @@ class routeWP {
 					}
 				}
 
-				if(is_array($route['supports'])){
-
-				}
-
 				$this->route = $route;
 				return $this->route;
 			}
 		}
+
+		return false;
+
+	}
+
+
+	function route_status($route = false){
+
+		if(!$route){
+			$route = $this->get_route();
+		}
+
+		if(isset($this->route_status))
+			return $this->route_status;
+
+		$status = 200;
+		switch ($route['type']) {
+			case 'single':
+				global $post;
+				if(!isset($post->ID))
+					$status = 404;
+				break;
+			
+			default:
+				# code...
+				break;
+		}
+
+		$this->route_status = $status;
+		return $this->route_status;
 
 	}
 
@@ -95,9 +127,19 @@ class routeWP {
 
 
 	function handle_request_template($tmpl){
-		if($route = $this->get_route())
+
+		if($tmpl == get_stylesheet_directory().'/404.php'){
+			return $this->status_templates[404];
+		}
+
+		if($route = $this->get_route()){
+			
+			if($this->route_status() !== 200)
+				return $this->status_templates[$this->route_status()];
+			
 			if($route['template'])
 				$tmpl = $route['template'];
+		}
 
 		return $tmpl;
 	}
@@ -121,6 +163,11 @@ class routeWP {
 		}
 
 		return $query;
+
+	}
+
+	function set_status_template($status, $tmpl){
+		$this->status_templates[$status] = $tmpl;
 	}
 
 }
