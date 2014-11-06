@@ -36,14 +36,21 @@ class routeWP {
 
 		$args = array_merge($defaults, $args);
 
-		if(!$args['pattern'])
+		if(!$args['handle']){
+			die('Please provide a handle for your route');
 			return false;
+		}
+
+		if(!$args['pattern']){
+			die('Please provide a pattern for your route');
+			return false;
+		}
 
 		$this->routes[$args['pattern']] = array(
-			'handle' 		=> $args['handle'],
+			'handle' 		=> $args['info'],
 			'query_vars' 	=> $args['query_vars'], 
 			'template' 		=> $args['template'],
-			'type' 			=> $args['type']
+			'callback'		=> $args['callback']
 			);
 
 	}
@@ -88,37 +95,15 @@ class routeWP {
 	}
 
 
-	function route_status($route = false){
-
-		if(!$route){
-			$route = $this->get_route();
-		}
-
-		if(isset($this->route_status))
-			return $this->route_status;
-
-		$status = 200;
-		switch ($route['type']) {
-			case 'single':
-				global $post;
-				if(!isset($post->ID))
-					$status = 404;
-				break;
-			
-			default:
-				# code...
-				break;
-		}
-
-		$this->route_status = $status;
-		return $this->route_status;
-
+	function save_route($route){
+		$this->route = $route;
 	}
 
+
 	function filter_request($request){
-		
+
 		if($route = $this->get_route()){
-			$request = array();
+			$request = $route['query_vars'];
 		}
 
 		return $request;
@@ -134,7 +119,15 @@ class routeWP {
 
 		if($route = $this->get_route()){
 			
-			if($this->route_status() !== 200)
+			$route['status'] = 200;
+
+			if(is_callable($route['callback'])){
+				add_filter('routeWP/resolve', $route['callback'], 10, 1);
+				$route = apply_filters('routeWP/resolve', $route);
+				remove_filter('routeWP/resolve', $route['callback']);
+			}
+
+			if($route['status'] !== 200)
 				return $this->status_templates[$this->route_status()];
 			
 			if($route['template'])
@@ -144,27 +137,27 @@ class routeWP {
 		return $tmpl;
 	}
 
-	function setup_query_vars($query_vars){
-		if($route = $this->get_route()){
-			foreach($route['query_vars'] as $key => $value){
-				$query_vars[] = $key;
-			}
-		}
-		return $query_vars;
-	}
+	// function setup_query_vars($query_vars){
+	// 	if($route = $this->get_route()){
+	// 		foreach($route['query_vars'] as $key => $value){
+	// 			$query_vars[] = $key;
+	// 		}
+	// 	}
+	// 	return $query_vars;
+	// }
 
-	function parse_query($query){
+	// function parse_query($query){
 		
-		if($route = $this->get_route()){
-			foreach($route['query_vars'] as $key => $value){
-				$query->set($key, $value);
-				$query->query[$key] = $value;
-			}
-		}
+	// 	if($route = $this->get_route()){
+	// 		foreach($route['query_vars'] as $key => $value){
+	// 			$query->set($key, $value);
+	// 			$query->query[$key] = $value;
+	// 		}
+	// 	}
 
-		return $query;
+	// 	return $query;
 
-	}
+	// }
 
 	function set_status_template($status, $tmpl){
 		$this->status_templates[$status] = $tmpl;
