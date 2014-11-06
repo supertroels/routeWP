@@ -47,7 +47,7 @@ class routeWP {
 		}
 
 		$this->routes[$args['pattern']] = array(
-			'handle' 		=> $args['info'],
+			'handle' 		=> $args['handle'],
 			'query_vars' 	=> $args['query_vars'], 
 			'template' 		=> $args['template'],
 			'callback'		=> $args['callback']
@@ -122,13 +122,18 @@ class routeWP {
 			$route['status'] = 200;
 
 			if(is_callable($route['callback'])){
-				add_filter('routeWP/resolve', $route['callback'], 10, 1);
-				$route = apply_filters('routeWP/resolve', $route);
-				remove_filter('routeWP/resolve', $route['callback']);
+				$has_assigned_cb = true;
+				add_filter('routeWP/handler', $route['callback'], 10, 1);
 			}
+	
+			$route = apply_filters('routeWP/handler', $route);
+
+			if($has_assigned_cb)
+				remove_filter('routeWP/handler', $route['callback']);
+
 
 			if($route['status'] !== 200)
-				return $this->status_templates[$this->route_status()];
+				return $this->status_templates[$route['status']];
 			
 			if($route['template'])
 				$tmpl = $route['template'];
