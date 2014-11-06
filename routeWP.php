@@ -14,8 +14,8 @@ class routeWP {
 
 		if(!is_admin()){
 			add_filter('request', array($this, 'filter_request'), 999, 1);
-			add_filter('query_vars', array($this, 'setup_query_vars'), 999, 1);
-			add_filter('parse_query', array($this, 'parse_query'), 999, 1);
+			// add_filter('query_vars', array($this, 'setup_query_vars'), 999, 1);
+			// add_filter('parse_query', array($this, 'parse_query'), 999, 1);
 			add_filter('template_include', array($this, 'handle_request_template'), 999, 1);
 		}
 
