@@ -13,10 +13,11 @@ class routeWP {
 		$this->status_templates = array();
 
 		if(!is_admin()){
-			add_filter('request', array($this, 'filter_request'), 999, 1);
+			add_filter('request', array($this, 'filter_request'), 100, 1);
 			// add_filter('query_vars', array($this, 'setup_query_vars'), 999, 1);
 			// add_filter('parse_query', array($this, 'parse_query'), 999, 1);
-			add_filter('template_include', array($this, 'handle_request_template'), 999, 1);
+			add_filter('template_include', array($this, 'handle_request_template'), 100, 1);
+			
 		}
 
 		$this->set_status_template(404, $this->dir.'/templates/404.php');
@@ -46,14 +47,22 @@ class routeWP {
 			return false;
 		}
 
-		$this->routes[$args['pattern']] = array(
-			'handle' 		=> $args['handle'],
-			'query_vars' 	=> $args['query_vars'], 
+		$this->routes[$args['handle']] = array(
+			'pattern' 		=> $args['pattern'],
+			'query_vars' 	=> $args['query_vars'],
 			'template' 		=> $args['template'],
-			'callback'		=> $args['callback']
+			'callback'		=> $args['callback'],
 			);
 
+		if($args['permalink_filter']){
+			add_filter('post_link', $args['permalink_filter'], 999, 4);
+			add_filter('page_link', $args['permalink_filter'], 999, 4);
+			add_filter('post_type_link', $args['permalink_filter'], 999, 4);
+		}
+
 	}
+
+
 
 	function get_route(){
 
@@ -67,9 +76,9 @@ class routeWP {
 		if(!$req)
 			$req = '/';
 
-		foreach($this->routes as $pattern => $route){
+		foreach($this->routes as $handle => $route){
 
-			if(preg_match($pattern, $req, $matches)){
+			if(preg_match($route['pattern'], $req, $matches)){
 
 				if(is_array($route['query_vars'])){
 					foreach($route['query_vars'] as $key => $value){
