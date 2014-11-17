@@ -122,10 +122,6 @@ class routeWP {
 
 	function handle_request_template($tmpl){
 
-		if($tmpl == get_stylesheet_directory().'/404.php'){
-			return $this->status_templates[404];
-		}
-
 		if($route = $this->get_route()){
 			
 			$route['status'] = 200;
@@ -146,6 +142,10 @@ class routeWP {
 			
 			if($route['template'])
 				$tmpl = $route['template'];
+		}
+		else{
+			if($tmpl == get_stylesheet_directory().'/404.php')
+				return $this->status_templates[404];
 		}
 
 		return $tmpl;
