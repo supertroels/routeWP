@@ -88,6 +88,12 @@ class routeWP {
 									if($matches[$num]){
 										$route['query_vars'][$key] = str_ireplace('$'.$num, $matches[$num], $route['query_vars'][$key]);
 									}
+									else{
+										$route['query_vars'][$key] = str_ireplace('$'.$num, '', $route['query_vars'][$key]);
+									}
+
+									if(empty($route['query_vars'][$key]))
+										unset($route['query_vars'][$key]);
 								}
 							}
 						}
