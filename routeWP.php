@@ -14,11 +14,10 @@ class routeWP {
 
 		if(!is_admin()){
 			add_filter('request', array($this, 'filter_request'), 100, 1);
-			// add_filter('query_vars', array($this, 'setup_query_vars'), 999, 1);
-			// add_filter('parse_query', array($this, 'parse_query'), 999, 1);
-			add_filter('template_include', array($this, 'handle_request_template'), 100, 1);
-			
+			add_filter('template_include', array($this, 'handle_request_template'), 100, 1);			
 		}
+
+		add_action('admin_bar_menu', array($this, 'add_route_to_toolbar'), 999);
 
 		$this->set_status_template(404, $this->dir.'/templates/404.php');
 
@@ -48,6 +47,7 @@ class routeWP {
 		}
 
 		$this->routes[$args['handle']] = array(
+			'handle' 		=> $args['handle'],
 			'pattern' 		=> $args['pattern'],
 			'query_vars' 	=> $args['query_vars'],
 			'template' 		=> $args['template'],
@@ -157,27 +157,20 @@ class routeWP {
 		return $tmpl;
 	}
 
-	// function setup_query_vars($query_vars){
-	// 	if($route = $this->get_route()){
-	// 		foreach($route['query_vars'] as $key => $value){
-	// 			$query_vars[] = $key;
-	// 		}
-	// 	}
-	// 	return $query_vars;
-	// }
 
-	// function parse_query($query){
-		
-	// 	if($route = $this->get_route()){
-	// 		foreach($route['query_vars'] as $key => $value){
-	// 			$query->set($key, $value);
-	// 			$query->query[$key] = $value;
-	// 		}
-	// 	}
+	function add_route_to_toolbar($wp_admin_bar){
+		if($route = $this->get_route()){
+	
+			$args = array(
+				'id'    => 'my_page',
+				'title' => 'Route: '.$route['handle']
+			);
+	
+			$wp_admin_bar->add_node($args);
 
-	// 	return $query;
+		}
+	}
 
-	// }
 
 	function set_status_template($status, $tmpl){
 		$this->status_templates[$status] = $tmpl;
