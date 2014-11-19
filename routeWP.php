@@ -46,13 +46,22 @@ class routeWP {
 			return false;
 		}
 
-		$this->routes[$args['handle']] = array(
-			'handle' 		=> $args['handle'],
-			'pattern' 		=> $args['pattern'],
-			'query_vars' 	=> $args['query_vars'],
-			'template' 		=> $args['template'],
-			'callback'		=> $args['callback'],
-			);
+
+		$insert = array(
+				'handle' 		=> $args['handle'],
+				'pattern' 		=> $args['pattern'],
+				'query_vars' 	=> $args['query_vars'],
+				'template' 		=> $args['template'],
+				'callback'		=> $args['callback'],
+				);
+
+		if($args['prepend']){
+			$this->routes = array_merge(array($args['handle'] => $args), $this->routes);
+		}
+		else{
+			$this->routes[$args['handle']] = $insert;
+
+		}
 
 		if($args['permalink_filter']){
 			add_filter('post_link', $args['permalink_filter'], 999, 4);
