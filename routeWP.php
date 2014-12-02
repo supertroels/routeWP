@@ -72,6 +72,15 @@ class routeWP {
 	}
 
 
+	function get_request(){
+
+		$req = explode('?', $_SERVER['REQUEST_URI']);
+		$req = $req[0];
+		
+		return $req;
+
+	}
+
 
 	function get_route(){
 
@@ -81,7 +90,8 @@ class routeWP {
 		if($this->route)
 			return $this->route;
 
-		$req = $_SERVER['REDIRECT_URL']; // This should probably be something else
+		$req = $this->get_request(); // This should probably be something else
+
 		if(!$req)
 			$req = '/';
 
