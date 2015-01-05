@@ -151,6 +151,9 @@ class routeWP {
 			
 			$route['status'] = 200;
 
+			if(is_404())
+				$route['status'] = '404';
+
 			if(is_callable($route['callback'])){
 				$has_assigned_cb = true;
 				add_filter('routeWP/handler', $route['callback'], 10, 1);
@@ -167,9 +170,10 @@ class routeWP {
 			
 			if($route['template'])
 				$tmpl = $route['template'];
+
 		}
 		else{
-			if($tmpl == get_stylesheet_directory().'/404.php')
+			if(is_404())
 				return $this->status_templates[404];
 		}
 
