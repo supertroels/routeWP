@@ -4,9 +4,7 @@ class routeWP {
 
 
 	private $routes = array();
-
-	private $pattern_var = '~:[^\/]+~';
-
+	private $route 	= null;
 
 
 	public function __construct(){
@@ -30,8 +28,8 @@ class routeWP {
 
 		$match = false;
 		foreach($this->routes[$request['method']] as $key => $route){
-			
-			if(preg_match($route['pattern'], $request['path'])){
+
+			if(preg_match($route->pattern, $request['path'])){
 				$match = true;
 				break;
 			}
@@ -39,14 +37,24 @@ class routeWP {
 		}
 
 		if(!$match)
-			return false; // No match bail
+			return false; // No match - bail
 
-		echo '<pre>';
-		print_r($route);
-		echo '</pre>';
+		call_user_func_array($route->controller, array($route));
 
-		die();
+		$this->route = $route;
 
+		$this->setup_hooks();
+
+	}
+
+
+
+	public function setup_hooks(){
+
+		if(!is_admin()){
+			add_filter('request', array($this, 'handle_request'), 100, 1);
+			add_filter('template_include', array($this, 'handle_request_template'), 100, 1);			
+		}
 
 	}
 
@@ -54,14 +62,18 @@ class routeWP {
 	public function handle_request($request){
 
 
-
+		return $request;
 	}
 
 
-	public function handle_request_template(){
-		
-		add_filter('template_include', array($this, 'handle_request_template'), 100, 1);			
+	public function handle_request_template($template){
 
+		if($this->route and $this->route->template){
+			status_header(200);
+			$template = $this->route->template;
+		}
+
+		return $template;
 	}
 
 
@@ -82,36 +94,13 @@ class routeWP {
 	}
 
 
-	public function get_path_keys(){
-
-
-		return $keys;
-
-	}
-
-
-
-	public function path_to_pattern($path){
-
-		$pattern = '~^'.preg_replace($this->pattern_var, '([^\/]+)', $path).'/?$~';
-		return $pattern;
-
-	}
-
 
 	public function request($method = 'GET', $path, $controller){
-
-		$route = array();
 		
-		$method = strtoupper($method);
+		include_once 'models/routeWP_route.php';
+		$route = new routeWP_route($method, $path, $controller);
 
-		$path = preg_replace('~[\/]{1,}$~', '', $path);
-
-		$route['path'] 			= $path;
-		$route['pattern'] 		= $this->path_to_pattern($path);
-		$route['controller'] 	= $controller;
-
-		$this->routes[$method][] = $route;
+		$this->routes[$route->method][] = $route;
 
 	}
 
