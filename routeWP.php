@@ -51,6 +51,8 @@ class routeWP {
 
 	public function setup_hooks(){
 
+		remove_filter('template_redirect', 'redirect_canonical');
+
 		if(!is_admin()){
 			add_filter('request', array($this, 'handle_request'), 100, 1);
 			add_filter('template_include', array($this, 'handle_request_template'), 100, 1);			
@@ -61,6 +63,8 @@ class routeWP {
 
 	public function handle_request($request){
 
+		if($this->route->query)
+			$request = $this->route->query;
 
 		return $request;
 	}

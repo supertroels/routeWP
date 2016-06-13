@@ -10,6 +10,7 @@ class routeWP_route {
 	public $vars			= array();
 	public $request			= array();
 	public $template		= null;
+	public $query			= null;
 
 	private $pattern_var 	= '~:[^\/]+~';
 
@@ -25,16 +26,16 @@ class routeWP_route {
 		$this->path = $path;
 
 		// Method
-		$this->pattern = $this->get_pattern();
+		$this->pattern 		= $this->get_pattern();
 
 		// Controller
-		$this->controller = $controller;
+		$this->controller 	= $controller;
 
 		// Request
-		$this->request = $this->get_request();
+		$this->request 		= $this->get_request();
 
 		// Vars
-		$this->vars = $this->get_request_vars();
+		$this->vars 		= $this->get_request_vars();
 
 	}
 
@@ -45,6 +46,38 @@ class routeWP_route {
 
 	}
 
+
+	public function set_query($name, $post_type = 'post'){
+
+		if($post_type == 'post'){
+			
+			$this->query = array(
+				'name'			=> $name,
+				);
+			
+		}
+		else {
+
+			$this->query = array(
+				'post_type'			=> $post_type,
+				'pagename'			=> $name,
+				$post_type			=> $name,
+				);
+
+		}
+
+	}
+
+
+	public function set_query_var($key, $var){
+		$this->query[$key] = $var;
+	}
+
+	public function get_request_var($key){
+		if(isset($this->vars[$key]))
+			return $this->vars[$key];
+		return false;
+	}
 
 	// Util functions
 	public function get_request(){
@@ -63,13 +96,7 @@ class routeWP_route {
 
 	}
 
-	private function get_vars(){
 
-		$keys = $this->get_path_keys();
-		$vars = $this->get_request_uri_vars();
-
-		return $vars;
-	}
 
 	private function get_path_keys(){
 
