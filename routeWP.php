@@ -14,11 +14,6 @@ class routeWP {
 
 		add_action('plugins_loaded', array($this, 'prepare_route'));
 
-		// if(!is_admin()){
-		// 	add_filter('request', array($this, 'handle_request'), 100, 1);
-		// 	add_filter('template_include', array($this, 'handle_request_template'), 100, 1);			
-		// }
-
 	}
 
 
@@ -43,13 +38,13 @@ class routeWP {
 
 		$this->route = $route;
 
-		$this->setup_hooks();
+		$this->setup_route_hooks();
 
 	}
 
 
 
-	public function setup_hooks(){
+	public function setup_route_hooks(){
 
 		remove_filter('template_redirect', 'redirect_canonical');
 
@@ -57,6 +52,7 @@ class routeWP {
 			add_filter('request', array($this, 'handle_request'), 100, 1);
 			add_filter('template_include', array($this, 'handle_request_template'), 100, 1);			
 		}
+
 
 	}
 
@@ -103,8 +99,23 @@ class routeWP {
 		
 		include_once 'models/routeWP_route.php';
 		$route = new routeWP_route($method, $path, $controller);
-
 		$this->routes[$route->method][] = $route;
+
+		return $route;
+
+	}
+
+
+	public function get($path, $controller){
+
+		return $this->request('GET', $path, $controller);
+
+	}
+
+
+	public function post($path, $controller){
+
+		return $this->request('POST', $path, $controller);
 
 	}
 

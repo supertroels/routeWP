@@ -3,16 +3,19 @@
 class routeWP_route {
 
 
-	public $method 			= null;
-	public $path 			= null;
-	public $controller 		= null;
-	public $pattern			= null;
-	public $vars			= array();
-	public $request			= array();
-	public $template		= null;
-	public $query			= null;
+	public $method 				= null;
+	public $path 				= null;
+	public $controller 			= null;
+	public $pattern				= null;
+	public $name				= null;
+	public $vars				= array();
+	public $request				= array();
+	public $template			= null;
+	public $query				= null;
+	public $link 				= null;
+	public $post_type 			= null;
 
-	private $pattern_var 	= '~:[^\/]+~';
+	private $pattern_var 		= '~:[^\/]+~';
 
 
 	public function __construct($method, $path, $controller){
@@ -37,17 +40,97 @@ class routeWP_route {
 		// Vars
 		$this->vars 		= $this->get_request_vars();
 
+
+		add_action('plugins_loaded', array($this, 'setup'));
+
 	}
+
+	public function setup(){
+
+		if($this->link){
+
+			add_filter('post_link', array($this, 'setup_single_link'), 999, 4);
+			add_filter('page_link', array($this, 'setup_single_link'), 999, 4);
+			add_filter('post_type_link', array($this, 'setup_single_link'), 999, 4);
+
+		}
+
+
+	}
+
+
+	public function setup_single_link($link, $post, $leavename, $sample = false){
+
+		if($post->post_type)
+			if($this->post_type != $post->post_type)
+				return $link;
+
+		if(!$this->link)
+			return $_link;
+
+
+		if(is_numeric($post))
+			$post = get_post($post);
+
+
+		if(is_callable($this->link))
+			$_link = call_user_func_array($this->link, array($this, $post));
+		else if(is_string($this->link))
+			$_link = $this->link;
+
+		if(!is_string($_link)) // This should not happen
+			return $link;
+
+
+		// Forgive user for %page% and %post% placeholders
+		$_link = str_ireplace(array('%post%', '%page%'), array('%postname%', '%pagename%'), $_link);
+
+
+		// Search for these strings
+		if($post->post_type == 'post' or $post->post_type == 'page'){
+			$find[] = '%'.$post->post_type.'name%';
+		}
+		else
+			$find[] = '%'.$post->post_type.'%';
+
+
+		if(!$sample)
+			$_link = str_ireplace($find, $post->post_name, $_link);
+
+		// Append URL
+		$_link = get_bloginfo('url').$_link;
+
+		return $_link;
+
+	}
+
+
 
 
 	public function set_template($template){
 
 		$this->template = get_stylesheet_directory().'/'.$template.'.php';
 
+		return $this;
+
+	}
+
+	public function set_post_type($post_type){
+
+		$this->post_type = $post_type;
+		return $this;
+
+	}
+
+	public function set_link($filter){
+
+		$this->link = $filter;
+
+		return $this;
 	}
 
 
-	public function set_query($name, $post_type = 'post'){
+	public function set_post_query($name, $post_type = 'post'){
 
 		if($post_type == 'post'){
 			
@@ -66,11 +149,21 @@ class routeWP_route {
 
 		}
 
+
+		return $this;
+
 	}
 
 
 	public function set_query_var($key, $var){
+		
 		$this->query[$key] = $var;
+		return $this;
+
+	}
+
+	public function set_name($name){
+		$this->name = $name;
 	}
 
 	public function get_request_var($key){
