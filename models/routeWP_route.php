@@ -5,20 +5,22 @@ class routeWP_route {
 
 	public $method 				= null;
 	public $path 				= null;
-	public $controller 			= null;
 	public $pattern				= null;
 	public $name				= null;
 	public $vars				= array();
 	public $request				= array();
 	public $template			= null;
 	public $query				= null;
-	public $link 				= null;
 	public $post_type 			= null;
+
+	public $on_match 			= null;
+	public $on_link 			= null;
+	public $on_query 			= null;
 
 	private $pattern_var 		= '~:[^\/]+~';
 
 
-	public function __construct($method, $path, $controller){
+	public function __construct($method, $path){
 
 
 		// Method
@@ -30,9 +32,6 @@ class routeWP_route {
 
 		// Method
 		$this->pattern 		= $this->get_pattern();
-
-		// Controller
-		$this->controller 	= $controller;
 
 		// Request
 		$this->request 		= $this->get_request();
@@ -47,7 +46,7 @@ class routeWP_route {
 
 	public function setup(){
 
-		if($this->link){
+		if($this->on_link){
 
 			add_filter('post_link', array($this, 'setup_single_link'), 999, 4);
 			add_filter('page_link', array($this, 'setup_single_link'), 999, 4);
@@ -61,11 +60,14 @@ class routeWP_route {
 
 	public function setup_single_link($link, $post, $leavename, $sample = false){
 
+		if($this->link_is_guid($link))
+			return $link;
+
 		if($post->post_type)
 			if($this->post_type != $post->post_type)
 				return $link;
 
-		if(!$this->link)
+		if(!$this->on_link)
 			return $_link;
 
 
@@ -73,10 +75,10 @@ class routeWP_route {
 			$post = get_post($post);
 
 
-		if(is_callable($this->link))
-			$_link = call_user_func_array($this->link, array($this, $post));
-		else if(is_string($this->link))
-			$_link = $this->link;
+		if(is_callable($this->on_link))
+			$_link = call_user_func_array($this->on_link, array($this, $post));
+		else if(is_string($this->on_link))
+			$_link = $this->on_link;
 
 		if(!is_string($_link)) // This should not happen
 			return $link;
@@ -94,7 +96,7 @@ class routeWP_route {
 			$find[] = '%'.$post->post_type.'%';
 
 
-		if(!$sample)
+		if(!$leavename and !$sample)
 			$_link = str_ireplace($find, $post->post_name, $_link);
 
 		// Append URL
@@ -105,30 +107,13 @@ class routeWP_route {
 	}
 
 
+	private function link_is_guid($link){
 
-
-	public function set_template($template){
-
-		$this->template = get_stylesheet_directory().'/'.$template.'.php';
-
-		return $this;
+		return preg_match('~p=[\d]{1,}~i', $link);
 
 	}
 
-	public function set_post_type($post_type){
-
-		$this->post_type = $post_type;
-		return $this;
-
-	}
-
-	public function set_link($filter){
-
-		$this->link = $filter;
-
-		return $this;
-	}
-
+	// SETTERS
 
 	public function set_post_query($name, $post_type = 'post'){
 
@@ -155,6 +140,21 @@ class routeWP_route {
 	}
 
 
+	public function set_template($template){
+
+		$this->template = get_stylesheet_directory().'/'.$template.'.php';
+		return $this;
+
+	}
+
+	public function set_post_type($post_type){
+
+		$this->post_type = $post_type;
+		return $this;
+
+	}
+
+
 	public function set_query_var($key, $var){
 		
 		$this->query[$key] = $var;
@@ -163,13 +163,47 @@ class routeWP_route {
 	}
 
 	public function set_name($name){
+
 		$this->name = $name;
+		return $this;
+		
 	}
+
+
+	// Filters
+
+	public function on_link($filter){
+
+		$this->on_link = $filter;
+		return $this;
+
+	}
+
+
+	public function on_match($filter){
+
+		$this->on_match = $filter;
+		return $this;
+
+	}
+
 
 	public function get_request_var($key){
 		if(isset($this->vars[$key]))
 			return $this->vars[$key];
 		return false;
+	}
+
+
+	public function get_link($vars = array()){
+
+		$link = $this->path;
+		foreach($vars as $key => $value){
+			$link = str_ireplace(':'.$key, $value, $link);
+		}
+
+		return get_bloginfo('url').$link;
+
 	}
 
 	// Util functions

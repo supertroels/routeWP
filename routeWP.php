@@ -34,7 +34,8 @@ class routeWP {
 		if(!$match)
 			return false; // No match - bail
 
-		call_user_func_array($route->controller, array($route));
+		if($route->on_match)
+			call_user_func_array($route->on_match, array($route));
 
 		$this->route = $route;
 
@@ -50,7 +51,7 @@ class routeWP {
 
 		if(!is_admin()){
 			add_filter('request', array($this, 'handle_request'), 100, 1);
-			add_filter('template_include', array($this, 'handle_request_template'), 100, 1);			
+			add_filter('template_include', array($this, 'handle_request_template'), 100, 1);
 		}
 
 
@@ -95,10 +96,10 @@ class routeWP {
 
 
 
-	public function request($method = 'GET', $path, $controller){
+	public function request($method = 'GET', $path){
 		
 		include_once 'models/routeWP_route.php';
-		$route = new routeWP_route($method, $path, $controller);
+		$route = new routeWP_route($method, $path);
 		$this->routes[$route->method][] = $route;
 
 		return $route;
@@ -106,22 +107,42 @@ class routeWP {
 	}
 
 
-	public function get($path, $controller){
+	public function get($path){
 
-		return $this->request('GET', $path, $controller);
+		return $this->request('GET', $path);
 
 	}
 
 
-	public function post($path, $controller){
+	public function post($path){
 
-		return $this->request('POST', $path, $controller);
+		return $this->request('POST', $path);
 
 	}
 
 
 	public function get_routes(){
 		return $this->routes;
+	}
+
+	public function get_link($name, $vars = array()){
+
+		$found = false;
+		foreach($this->routes as $method => $routes){
+			foreach($routes as $route){
+				if($route->name == $name){
+					$found = true;
+					break 2;
+				}
+			}
+		}
+
+
+		if(!$found)
+			return false;
+
+		return $route->get_link($vars);
+
 	}
 
 
