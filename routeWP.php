@@ -25,7 +25,30 @@ class routeWP {
 		foreach($this->routes[$request['method']] as $key => $route){
 
 			if(preg_match($route->pattern, $request['path'])){
-				$match = true;
+				
+				if($route->on_match){
+
+					$return = call_user_func_array($route->on_match, array($route));
+
+					if($route->status != 200){
+						add_action('wp', array($route, 'do_status'));
+						break;
+					}
+
+					if($return === false)
+						continue;
+
+				}
+
+				if(!preg_match('~\/$~', $request['path'])){
+					wp_redirect($request['path'].'/');
+					die();
+				}
+
+				$this->route = $route;
+
+				$this->setup_route_hooks();
+
 				break;
 			}
 
@@ -34,12 +57,6 @@ class routeWP {
 		if(!$match)
 			return false; // No match - bail
 
-		if($route->on_match)
-			call_user_func_array($route->on_match, array($route));
-
-		$this->route = $route;
-
-		$this->setup_route_hooks();
 
 	}
 

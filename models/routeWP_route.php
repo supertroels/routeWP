@@ -12,6 +12,7 @@ class routeWP_route {
 	public $template			= null;
 	public $query				= null;
 	public $post_type 			= null;
+	public $status 				= 200;
 
 	public $on_match 			= null;
 	public $on_link 			= null;
@@ -135,6 +136,14 @@ class routeWP_route {
 		}
 
 
+		return $this;
+
+	}
+
+
+	public function set_status($status){
+
+		$this->status = $status;
 		return $this;
 
 	}
@@ -271,6 +280,17 @@ class routeWP_route {
 
 	}
 
+
+	public function do_status(){
+
+		if($this->status == 404){
+			global $wp_query;
+			$wp_query->set_404();
+		}
+
+		status_header($this->status);
+
+	}
 
 }
 
